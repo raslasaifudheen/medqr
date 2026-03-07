@@ -1,0 +1,7 @@
+{
+  "name": "MedQR Emergency Link",
+  "description": "A life-saving application that allows users to store critical medical data and generate a unique QR code. First responders can scan this code in case of emergencies to instantly access vital health information and emergency contacts.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
