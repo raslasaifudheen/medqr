@@ -11,6 +11,7 @@ import {
     FileText,
     MapPin,
 } from "lucide-react"
+import { emergencyService, locationService } from "../services/emergencyService"
 
 interface Props {
     profile: MedicalProfile
@@ -21,62 +22,78 @@ const EmergencyView: React.FC<Props> = ({ profile }) => {
     const [showOtpInput, setShowOtpInput] = useState(false)
     const [otp, setOtp] = useState("")
     const [error, setError] = useState("")
+    const [isLoading, setIsLoading] = useState(false)
     const [isLocating, setIsLocating] = useState(false)
 
     // --- Geolocation Logic ---
-    const handleSendLocation = () => {
-        if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser")
-            return
+    const handleShareLocation = async () => {
+        const contact = profile.emergencyContacts[0]
+        try {
+            await locationService.sendLocationWhatsApp(
+                contact.phone,
+                profile.fullName,
+            )
+        } catch (err) {
+            alert(err)
         }
-
-        setIsLocating(true)
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setIsLocating(false)
-                const { latitude, longitude } = position.coords
-                const googleMapsUrl = `https://www.google.com/maps?q=${latitude},${longitude}`
-
-                const primaryContact = profile.emergencyContacts[0]
-                const contactName = primaryContact
-                    ? primaryContact.name
-                    : "Emergency Contacts"
-
-                // In a real app, this triggers an SMS API
-                alert(
-                    `LOCATION SENT!\n\nTo: ${contactName}\nMessage: "EMERGENCY: I need help. My current location is: ${googleMapsUrl}"`,
-                )
-            },
-            (error) => {
-                setIsLocating(false)
-                alert(
-                    "Unable to retrieve your location. Please ensure location services are enabled.",
-                )
-            },
-        )
     }
 
     // --- OTP Logic ---
-    const handleRequestOtp = () => {
+    const handleRequestOtp = async () => {
         const primaryContact = profile.emergencyContacts[0]
-        if (!primaryContact) {
+        if (!primaryContact?.phone) {
             alert("No emergency contact found to send OTP.")
             return
         }
-        alert(
-            `Emergency: OTP sent to ${primaryContact.name} (${primaryContact.phone})`,
-        )
-        setShowOtpInput(true)
-        setError("")
+
+        setIsLoading(true)
+        try {
+            // const response = await emergencyService.requestAccess(
+            //     profile.id,
+            //     profile.fullName,
+            //     primaryContact.phone,
+            // )
+
+            // if (response.whatsappUrl) {
+            //     window.open(response.whatsappUrl, "_blank")
+            //     setShowOtpInput(true)
+            //     setError("")
+            // }
+            setShowOtpInput(true)
+        } catch (err) {
+            alert("Failed to initialize request. Please try again.")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
-    const handleVerifyOtp = () => {
-        if (otp === "1234") {
-            setIsLocked(false)
-            setShowOtpInput(false)
-        } else {
-            setError("Invalid OTP. Please try again.")
+    const handleVerifyOtp = async () => {
+        const primaryContact = profile.emergencyContacts[0]
+        if (!primaryContact?.phone) return
+
+        setIsLoading(true)
+        try {
+            // const result = await emergencyService.verifyAccess(
+            //     primaryContact.phone,
+            //     otp,
+            // )
+
+            // if (result.valid) {
+            //     setIsLocked(false)
+            //     setShowOtpInput(false)
+            // }
+
+            if (otp === "1234") {
+                setIsLocked(false)
+                setShowOtpInput(false)
+                setError("")
+            } else {
+                setError(/* result.message || */ "Invalid code.")
+            }
+        } catch (err) {
+            setError("Verification service error.")
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -123,7 +140,7 @@ const EmergencyView: React.FC<Props> = ({ profile }) => {
             {/* QUICK ACTIONS SECTION */}
             <div className="grid grid-cols-1 gap-3">
                 <button
-                    onClick={handleSendLocation}
+                    onClick={handleShareLocation}
                     disabled={isLocating}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-orange-200 transition-all active:scale-95 disabled:opacity-70"
                 >
@@ -213,7 +230,7 @@ const EmergencyView: React.FC<Props> = ({ profile }) => {
                             <div className="max-w-xs mx-auto space-y-3">
                                 <input
                                     type="text"
-                                    placeholder="Enter 1234"
+                                    placeholder="Enter OTP"
                                     value={otp}
                                     onChange={(e) => setOtp(e.target.value)}
                                     className="w-full p-3 border-2 border-blue-100 rounded-xl text-center text-xl font-bold tracking-widest outline-none"
