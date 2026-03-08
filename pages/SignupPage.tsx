@@ -48,7 +48,7 @@ const SignupPage: React.FC = () => {
                 additionalNotes: "",
             })
 
-            navigate("/") // Redirect to dashboard
+            navigate("/edit") // Redirect to dashboard
         } catch (error: any) {
             console.error(error)
             alert(error.message || "Signup failed. Please try again.")
