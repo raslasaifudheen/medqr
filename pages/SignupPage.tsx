@@ -33,20 +33,23 @@ const SignupPage: React.FC = () => {
 
             // 2. Initialize the Medical Profile in Firestore
             // This prevents the "Profile not found" error on the first login
-            await updateProfile({
-                id: user.uid,
-                fullName: name,
-                dateOfBirth: "",
-                bloodType: "",
-                allergies: [],
-                medications: [],
-                conditions: [],
-                organDonor: false,
-                insuranceProvider: "",
-                insurancePolicyNumber: "",
-                emergencyContacts: [],
-                additionalNotes: "",
-            })
+            await updateProfile(
+                {
+                    id: user.uid,
+                    fullName: name,
+                    dateOfBirth: "",
+                    bloodType: "" as any,
+                    allergies: [],
+                    medications: [],
+                    conditions: [],
+                    organDonor: false,
+                    insuranceProvider: "",
+                    insurancePolicyNumber: "",
+                    emergencyContacts: [],
+                    additionalNotes: "",
+                },
+                user.uid,
+            )
 
             navigate("/edit") // Redirect to dashboard
         } catch (error: any) {

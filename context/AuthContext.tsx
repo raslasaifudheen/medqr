@@ -14,7 +14,10 @@ interface AuthContextType {
     user: User | null
     profile: MedicalProfile | null
     loading: boolean
-    updateProfile: (profile: MedicalProfile) => Promise<void>
+    updateProfile: (
+        profile: MedicalProfile,
+        uidOverride?: string,
+    ) => Promise<void>
     logout: () => Promise<void>
     login: (email: string, password: string) => Promise<UserCredential>
 }
@@ -61,13 +64,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => unsubscribe()
     }, [])
 
-    const updateProfile = async (newProfile: MedicalProfile) => {
-        if (!user) throw new Error("No authenticated user found")
+    const updateProfile = async (
+        newProfile: MedicalProfile,
+        uidOverride?: string,
+    ) => {
+        const activeUid = uidOverride || user?.uid
 
-        // Ensure the profile ID matches the user's UID for security
-        const profileWithId = { ...newProfile, id: user.uid }
+        if (!activeUid) {
+            throw new Error("No authenticated user found")
+        }
 
-        await setDoc(doc(db, "users", user.uid), profileWithId)
+        const profileWithId = { ...newProfile, id: activeUid }
+
+        await setDoc(doc(db, "users", activeUid), profileWithId)
         setProfile(profileWithId)
     }
 
