@@ -8,6 +8,7 @@ import {
     Heart,
     AlertCircle,
     ShieldCheck,
+    Phone,
 } from "lucide-react"
 
 interface Props {
@@ -26,6 +27,17 @@ const BLOOD_TYPES: BloodType[] = [
     "O-",
 ]
 
+const COUNTRY_CODES = [
+    { code: "+91", label: "🇮🇳 +91" },
+    { code: "+971", label: "🇦🇪 +971" },
+    { code: "+966", label: "🇸🇦 +966" },
+    { code: "+1", label: "🇺🇸 +1" },
+    { code: "+44", label: "🇬🇧 +44" },
+    { code: "+965", label: "🇰🇼 +965" },
+    { code: "+974", label: "🇶🇦 +974" },
+    { code: "+968", label: "🇴🇲 +968" },
+]
+
 const EMPTY_PROFILE: MedicalProfile = {
     id: "",
     fullName: "",
@@ -37,7 +49,7 @@ const EMPTY_PROFILE: MedicalProfile = {
     organDonor: false,
     insuranceProvider: "",
     insurancePolicyNumber: "",
-    emergencyContacts: [{ name: "", relationship: "", phone: "" }],
+    emergencyContacts: [{ name: "", relationship: "", phone: "+91 " }],
     additionalNotes: "",
 }
 
@@ -103,21 +115,11 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
     }
 
     const addContact = () => {
-        const lastContact =
-            profile.emergencyContacts[profile.emergencyContacts.length - 1]
-        if (
-            lastContact &&
-            !lastContact.name.trim() &&
-            !lastContact.phone.trim()
-        ) {
-            alert("Please fill out the current contact before adding another.")
-            return
-        }
         setProfile((prev) => ({
             ...prev,
             emergencyContacts: [
                 ...prev.emergencyContacts,
-                { name: "", relationship: "", phone: "" },
+                { name: "", relationship: "", phone: "+91 " },
             ],
         }))
     }
@@ -144,8 +146,7 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
         const activeContacts = profile.emergencyContacts.filter(
             (c) =>
                 c.name.trim() !== "" ||
-                c.relationship.trim() !== "" ||
-                c.phone.trim() !== "",
+                c.phone.replace("+91", "").trim() !== "",
         )
 
         if (activeContacts.length === 0) {
@@ -153,18 +154,7 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
             return
         }
 
-        const incompleteContact = activeContacts.find(
-            (c) => !c.name.trim() || !c.phone.trim(),
-        )
-
-        if (incompleteContact) {
-            alert(
-                `Contact "${incompleteContact.name || "Unknown"}" is missing a phone number or name.`,
-            )
-            return
-        }
-
-        // Clean up empty strings from arrays before saving
+        // Final Cleanup
         const cleanedProfile = {
             ...profile,
             emergencyContacts: activeContacts,
@@ -178,7 +168,6 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
 
     return (
         <div className="space-y-8 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            {/* Header for New Users */}
             {!initialData && (
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3">
                     <AlertCircle className="text-blue-600 shrink-0" />
@@ -260,7 +249,7 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
                 </div>
             </section>
 
-            {/* Lists Section */}
+            {/* Medical Lists */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {[
                     {
@@ -286,8 +275,7 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
                     <section key={key} className="space-y-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 font-medium text-slate-700">
-                                {icon}
-                                <span>{label}</span>
+                                {icon} <span>{label}</span>
                             </div>
                             <button
                                 onClick={() => addItem(key as any)}
@@ -331,7 +319,7 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
             <section className="space-y-4">
                 <div className="flex items-center justify-between text-blue-600 font-semibold mb-2">
                     <div className="flex items-center gap-2">
-                        <Heart size={20} />
+                        <Phone size={20} />
                         <h2 className="text-lg">Emergency Contacts</h2>
                     </div>
                     <button
@@ -341,58 +329,86 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
                         <Plus size={16} /> Add Contact
                     </button>
                 </div>
-                <div className="space-y-3">
-                    {profile.emergencyContacts.map((contact, idx) => (
-                        <div
-                            key={idx}
-                            className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 border border-slate-100 rounded-xl bg-slate-50/50"
-                        >
-                            <input
-                                placeholder="Name"
-                                value={contact.name}
-                                onChange={(e) =>
-                                    handleContactChange(
-                                        idx,
-                                        "name",
-                                        e.target.value,
-                                    )
-                                }
-                                className="p-2 border border-slate-200 rounded-lg outline-none"
-                            />
-                            <input
-                                placeholder="Relationship"
-                                value={contact.relationship}
-                                onChange={(e) =>
-                                    handleContactChange(
-                                        idx,
-                                        "relationship",
-                                        e.target.value,
-                                    )
-                                }
-                                className="p-2 border border-slate-200 rounded-lg outline-none"
-                            />
-                            <div className="flex gap-2">
-                                <input
-                                    placeholder="Phone"
-                                    value={contact.phone}
-                                    onChange={(e) =>
-                                        handleContactChange(
-                                            idx,
-                                            "phone",
-                                            e.target.value,
-                                        )
-                                    }
-                                    className="flex-1 p-2 border border-slate-200 rounded-lg outline-none"
-                                />
-                                <button
-                                    onClick={() => removeContact(idx)}
-                                    className="p-2 text-slate-400 hover:text-red-500"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                <div className="space-y-4">
+                    {profile.emergencyContacts.map((contact, idx) => {
+                        const [currentCode, ...rest] = contact.phone.split(" ")
+                        const currentNumber = rest.join(" ")
+
+                        return (
+                            <div
+                                key={idx}
+                                className="p-4 border border-slate-100 rounded-xl bg-slate-50/50 space-y-3"
+                            >
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <input
+                                        placeholder="Contact Name"
+                                        value={contact.name}
+                                        onChange={(e) =>
+                                            handleContactChange(
+                                                idx,
+                                                "name",
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="p-2 border border-slate-200 rounded-lg outline-none text-sm"
+                                    />
+                                    <input
+                                        placeholder="Relationship (e.g. Spouse)"
+                                        value={contact.relationship}
+                                        onChange={(e) =>
+                                            handleContactChange(
+                                                idx,
+                                                "relationship",
+                                                e.target.value,
+                                            )
+                                        }
+                                        className="p-2 border border-slate-200 rounded-lg outline-none text-sm"
+                                    />
+                                </div>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={
+                                            currentCode.startsWith("+")
+                                                ? currentCode
+                                                : "+91"
+                                        }
+                                        onChange={(e) =>
+                                            handleContactChange(
+                                                idx,
+                                                "phone",
+                                                `${e.target.value} ${currentNumber}`,
+                                            )
+                                        }
+                                        className="w-28 p-2 border border-slate-200 rounded-lg outline-none bg-white text-sm"
+                                    >
+                                        {COUNTRY_CODES.map((c) => (
+                                            <option key={c.code} value={c.code}>
+                                                {c.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        placeholder="Phone Number"
+                                        value={currentNumber}
+                                        onChange={(e) =>
+                                            handleContactChange(
+                                                idx,
+                                                "phone",
+                                                `${currentCode} ${e.target.value}`,
+                                            )
+                                        }
+                                        className="flex-1 p-2 border border-slate-200 rounded-lg outline-none text-sm"
+                                    />
+                                    <button
+                                        onClick={() => removeContact(idx)}
+                                        className="p-2 text-slate-400 hover:text-red-500"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </section>
 
@@ -408,14 +424,14 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
                             placeholder="Provider Name"
                             value={profile.insuranceProvider}
                             onChange={handleChange}
-                            className="w-full p-2 border border-slate-200 rounded-lg outline-none"
+                            className="w-full p-2 border border-slate-200 rounded-lg outline-none text-sm"
                         />
                         <input
                             name="insurancePolicyNumber"
                             placeholder="Policy Number"
                             value={profile.insurancePolicyNumber}
                             onChange={handleChange}
-                            className="w-full p-2 border border-slate-200 rounded-lg outline-none"
+                            className="w-full p-2 border border-slate-200 rounded-lg outline-none text-sm"
                         />
                     </div>
                 </div>
@@ -429,17 +445,16 @@ const MedicalForm: React.FC<Props> = ({ initialData, onSave }) => {
                         value={profile.additionalNotes}
                         onChange={handleChange}
                         rows={3}
-                        className="w-full p-2 border border-slate-200 rounded-lg outline-none resize-none"
+                        className="w-full p-2 border border-slate-200 rounded-lg outline-none resize-none text-sm"
                     />
                 </div>
             </section>
 
             <button
                 onClick={validateAndSave}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all transform active:scale-[0.98]"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all transform active:scale-[0.98]"
             >
-                <Save size={20} />
-                Save & Update Profile
+                <Save size={20} /> Save & Update Profile
             </button>
         </div>
     )
